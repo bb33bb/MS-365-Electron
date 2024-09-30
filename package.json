@@ -28,7 +28,11 @@
       ],
       "icon": "./assets/icons/mac/icon.icns",
       "files": [
-        "!node_modules/**/*.{mk,a,o,h}"
+        "!node_modules/**/*.{mk,a,o,h}",
+        "assets/**/*",
+        "build/**/*",
+        "node_modules/**/*",
+        "package.json"
       ]
     },
     "win": {
@@ -77,6 +81,8 @@
     "@aptabase/electron": "^0.3.1",
     "@cliqz/adblocker-electron": "^1.33.2",
     "@xhayper/discord-rpc": "^1.2.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "axios": "^1.7.7",
     "check-internet-connected": "^2.0.6",
     "cross-fetch": "^4.0.0",

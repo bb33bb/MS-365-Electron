@@ -1,320 +1,377 @@
-import { app, Menu, BrowserWindow, dialog, nativeImage, shell } from "electron";
-import { clearActivity, setActivity, loginToRPC } from "./config/rpc.js";
-import { initialize, trackEvent } from "@aptabase/electron/main";
-import { ElectronBlocker } from "@cliqz/adblocker-electron";
-import { setValue, getValue } from "./config/store.js";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
-
-import { getScreenWidth, getScreenHeight } from "./config/dimensions.js";
-import Windows from "./useragents.json" with { type: "json" };
+import {app, Menu, BrowserWindow, dialog, nativeImage, shell, Tray} from "electron";
+import {clearActivity, setActivity, loginToRPC} from "./config/rpc.js";
+import {initialize, trackEvent} from "@aptabase/electron/main";
+import {ElectronBlocker} from "@cliqz/adblocker-electron";
+import {setValue, getValue} from "./config/store.js";
+import {dirname, join} from "path";
+import {fileURLToPath} from "url";
+import path from "path";
+import {getScreenWidth, getScreenHeight} from "./config/dimensions.js";
+import Windows from "./useragents.json" with {type: "json"};
 import checkInternetConnected from "check-internet-connected";
-import domains from "./domains.json" with { type: "json" };
+import domains from "./domains.json" with {type: "json"};
 import contextMenu from "electron-context-menu";
 import updaterpkg from "electron-updater";
 import ElectronDl from "electron-dl";
 import menulayout from "./config/menu.js";
 import logpkg from "electron-log";
 
-const { transports, log: _log, functions } = logpkg;
+const {transports, log: _log, functions} = logpkg;
 const __filename = fileURLToPath(import.meta.url);
 const windowHeight = getValue("windowHeight");
 const windowWidth = getValue("windowWidth");
 const __dirname = dirname(__filename);
-const { autoUpdater } = updaterpkg;
-
+const {autoUpdater} = updaterpkg;
+let mainWindow;
+let tray;
 transports.file.level = "verbose";
 console.log = _log;
 Object.assign(console, functions);
-
+// 放置错误处理器
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    // 可以在这里添加更多的错误处理逻辑，比如显示一个对话框
+    dialog.showErrorBox('An error occurred', error.message);
+});
 if (getValue("aptabaseTracking") === true) {
-  initialize("A-US-2528580917").catch((error) => {
-    console.error("Error initializing:", error);
-  });
+    initialize("A-US-2528580917").catch((error) => {
+        console.error("Error initializing:", error);
+    });
 }
 
 function createWindow() {
-  const enterpriseOrNormal = getValue("enterprise-or-normal");
-  const custompage = getValue("custompage");
-  const partition = enterpriseOrNormal === "?auth=1" ? "persist:personal" : "persist:work";
+    const enterpriseOrNormal = getValue("enterprise-or-normal");
+    const custompage = getValue("custompage");
+    const partition = enterpriseOrNormal === "?auth=1" ? "persist:personal" : "persist:work";
 
-  const win = new BrowserWindow({
-    width: Math.round(getScreenWidth() * getValue("windowWidth")),
-    height: Math.round(getScreenHeight() * getValue("windowHeight")),
-    icon: join(__dirname, "/assets/icons/png/1024x1024.png"),
-    show: false,
-    webPreferences: {
-      nodeIntegration: true,
-      devTools: true,
-      partition: partition,
-    },
-  });
+    const win = new BrowserWindow({
+        width: Math.round(getScreenWidth() * getValue("windowWidth")),
+        height: Math.round(getScreenHeight() * getValue("windowHeight")),
+        icon: join(__dirname, "/assets/icons/png/1024x1024.png"),
+        show: false,
+        webPreferences: {
+            nodeIntegration: true,
+            devTools: true,
+            partition: partition,
+        },
+    });
+    mainWindow = win;  // 保存对主窗口的引用
+    win.setAutoHideMenuBar(getValue("autohide-menubar") === "true");
 
-  win.setAutoHideMenuBar(getValue("autohide-menubar") === "true");
+    const splash = new BrowserWindow({
+        width: Math.round(getScreenWidth() * 0.49),
+        height: Math.round(getScreenHeight() * 0.65),
+        transparent: true,
+        frame: false,
+        icon: join(__dirname, "/assets/icons/png/1024x1024.png"),
+    });
 
-  const splash = new BrowserWindow({
-    width: Math.round(getScreenWidth() * 0.49),
-    height: Math.round(getScreenHeight() * 0.65),
-    transparent: true,
-    frame: false,
-    icon: join(__dirname, "/assets/icons/png/1024x1024.png"),
-  });
-
-  splash.loadURL(`https://agam778.github.io/MS-365-Electron/loading`);
-
-  win.loadURL(`https://microsoft365.com/${custompage}/${enterpriseOrNormal}`, {
-    userAgent: getValue("useragentstring") || Windows,
-  });
-
-  win.webContents.on("did-finish-load", () => {
-    splash.destroy();
-    win.show();
-    if (getValue("aptabaseTracking") === true) {
-      trackEvent("app_started").catch((error) => {
-        console.error("Error tracking event:", error);
-      });
-    }
-    if (getValue("discordrpcstatus") === "true") {
-      setActivity(`On "${win.webContents.getTitle()}"`);
-    }
-    if (getValue("blockadsandtrackers") === "true") {
-      ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) => {
-        blocker.enableBlockingInSession(win.webContents.session);
-      });
-    }
-  });
+    splash.loadURL(`https://agam778.github.io/MS-365-Electron/loading`);
+    win.loadURL(`https://microsoft365.com/${custompage}/${enterpriseOrNormal}`, {
+        userAgent: getValue("useragentstring") || Windows,
+    });
+    win.webContents.on("did-finish-load", () => {
+        splash.destroy();
+        win.show();
+        if (getValue("aptabaseTracking") === true) {
+            trackEvent("app_started").catch((error) => {
+                console.error("Error tracking event:", error);
+            });
+        }
+        if (getValue("discordrpcstatus") === "true") {
+            setActivity(`On "${win.webContents.getTitle()}"`);
+        }
+        if (getValue("blockadsandtrackers") === "true") {
+            ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) => {
+                blocker.enableBlockingInSession(win.webContents.session);
+            });
+        }
+    });
+    win.on('close', function (event) {
+        if (!app.isQuitting) {
+            event.preventDefault();
+            win.hide();
+            return false;
+        }
+    });
 }
 
 ElectronDl({
-  dlPath: "./downloads",
-  onStarted: (item) => {
-    dialog.showMessageBox({
-      type: "info",
-      title: "Downloading File",
-      message: `Downloading "${item.getFilename()}" to "${item.getSavePath()}"`,
-      buttons: ["OK"],
-    });
-  },
-  onCompleted: () => {
-    dialog.showMessageBox({
-      type: "info",
-      title: "Download Completed",
-      message: `Downloading Completed! Please check your "Downloads" folder.`,
-      buttons: ["OK"],
-    });
-  },
-  onError: (item) => {
-    dialog.showMessageBox({
-      type: "error",
-      title: "Download failed",
-      message: `Downloading "${item.getFilename()}" failed :(`,
-      buttons: ["OK"],
-    });
-  },
+    dlPath: "./downloads",
+    onStarted: (item) => {
+        dialog.showMessageBox({
+            type: "info",
+            title: "Downloading File",
+            message: `Downloading "${item.getFilename()}" to "${item.getSavePath()}"`,
+            buttons: ["OK"],
+        });
+    },
+    onCompleted: () => {
+        dialog.showMessageBox({
+            type: "info",
+            title: "Download Completed",
+            message: `Downloading Completed! Please check your "Downloads" folder.`,
+            buttons: ["OK"],
+        });
+    },
+    onError: (item) => {
+        dialog.showMessageBox({
+            type: "error",
+            title: "Download failed",
+            message: `Downloading "${item.getFilename()}" failed :(`,
+            buttons: ["OK"],
+        });
+    },
 });
 
 contextMenu({
-  showInspectElement: true,
-  showServices: true,
+    showInspectElement: true,
+    showServices: true,
 });
+function createTray() {
+    let trayIcon;
+    try {
+        // 尝试加载 16x16 图标
+        const iconPath = path.join(app.getAppPath(), 'assets', 'icons', 'png', '16x16.png');
+        trayIcon = nativeImage.createFromPath(iconPath);
 
+        // 检查图标是否成功加载
+        if (trayIcon.isEmpty()) {
+            throw new Error('Tray icon is empty');
+        }
+    } catch (error) {
+        console.error('Failed to load tray icon:', error);
+        // 使用备用图标或创建一个空白图标
+        trayIcon = nativeImage.createEmpty();
+    }
+
+    tray = new Tray(trayIcon);
+
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: '显示',
+            click: () => {
+                mainWindow.show();
+                if (getValue("discordrpcstatus") === "true") {
+                    setActivity(`On "${mainWindow.webContents.getTitle()}"`);
+                }
+            }
+        },
+        {
+            label: '退出',
+            click: () => {
+                app.isQuitting = true;
+                clearActivity();
+                app.quit();
+            }
+        }
+    ]);
+
+    tray.setToolTip('Microsoft 365 Electron');
+    tray.setContextMenu(contextMenu);
+
+    tray.on('click', () => {
+        mainWindow.show();
+    });
+}
 Menu.setApplicationMenu(Menu.buildFromTemplate(menulayout));
 
 app.on("ready", () => {
-  createWindow();
-  if (getValue("aptabaseTracking") === null) {
-    const aptabasedialog = dialog.showMessageBoxSync({
-      type: "question",
-      buttons: ["Yes", "No"],
-      title: "Enable Aptabase Tracking",
-      message: "Would you like to enable Aptabase Tracking?",
-      detail:
-        "Aptabase Tracking helps us improve the app by collecting anonymous usage data. No personal information is collected.\n\nYou can always enable or disable this in the app menu.",
-    });
-    if (aptabasedialog === 0) {
-      setValue("aptabaseTracking", true);
-    } else {
-      setValue("aptabaseTracking", false);
+    createWindow();
+    createTray();
+    if (getValue("aptabaseTracking") === null) {
+        const aptabasedialog = dialog.showMessageBoxSync({
+            type: "question",
+            buttons: ["Yes", "No"],
+            title: "Enable Aptabase Tracking",
+            message: "Would you like to enable Aptabase Tracking?",
+            detail:
+                "Aptabase Tracking helps us improve the app by collecting anonymous usage data. No personal information is collected.\n\nYou can always enable or disable this in the app menu.",
+        });
+        if (aptabasedialog === 0) {
+            setValue("aptabaseTracking", true);
+        } else {
+            setValue("aptabaseTracking", false);
+        }
     }
-  }
 });
 
 app.on("web-contents-created", (event, contents) => {
-  contents.setWindowOpenHandler(({ url }) => {
-    const urlObject = new URL(url);
-    const domain = urlObject.hostname;
-    const protocol = urlObject.protocol;
+    contents.setWindowOpenHandler(({url}) => {
+        const urlObject = new URL(url);
+        const domain = urlObject.hostname;
+        const protocol = urlObject.protocol;
 
-    if (getValue("externalLinks") === "true") {
-      if (protocol === "http:" || protocol === "https:") {
-        const isAllowedDomain = domains.domains.some((allowedDomain) =>
-          new RegExp(`^${allowedDomain.replace("*.", ".*")}$`).test(domain)
-        );
+        if (getValue("externalLinks") === "true") {
+            if (protocol === "http:" || protocol === "https:") {
+                const isAllowedDomain = domains.domains.some((allowedDomain) =>
+                    new RegExp(`^${allowedDomain.replace("*.", ".*")}$`).test(domain)
+                );
 
-        if (isAllowedDomain) {
-          if (getValue("websites-in-new-window") === "false") {
-            if (url.includes("page=Download")) return { action: "allow" };
-            BrowserWindow.getFocusedWindow().loadURL(url).catch();
-            if (getValue("discordrpcstatus") === "true") {
-              setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
+                if (isAllowedDomain) {
+                    if (getValue("websites-in-new-window") === "false") {
+                        if (url.includes("page=Download")) return {action: "allow"};
+                        BrowserWindow.getFocusedWindow().loadURL(url).catch();
+                        if (getValue("discordrpcstatus") === "true") {
+                            setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
+                        }
+                        return {action: "deny"};
+                    } else {
+                        if (getValue("discordrpcstatus") === "true") {
+                            setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
+                        }
+                        return {
+                            action: "allow",
+                            overrideBrowserWindowOptions: {
+                                width: Math.round(getScreenWidth() * (windowWidth - 0.07)),
+                                height: Math.round(getScreenHeight() * (windowHeight - 0.07)),
+                            },
+                        };
+                    }
+                } else {
+                    shell.openExternal(url);
+                    return {action: "deny"};
+                }
+            } else {
+                return {action: "deny"};
             }
-            return { action: "deny" };
-          } else {
-            if (getValue("discordrpcstatus") === "true") {
-              setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
+        } else {
+            if (getValue("websites-in-new-window") === "false") {
+                if (url.includes("page=Download")) return {action: "allow"};
+                BrowserWindow.getFocusedWindow().loadURL(url).catch();
+                if (getValue("discordrpcstatus") === "true") {
+                    setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
+                }
+                return {action: "deny"};
+            } else {
+                if (getValue("discordrpcstatus") === "true") {
+                    setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
+                }
+                return {
+                    action: "allow",
+                    overrideBrowserWindowOptions: {
+                        width: Math.round(getScreenWidth() * (windowWidth - 0.07)),
+                        height: Math.round(getScreenHeight() * (windowHeight - 0.07)),
+                    },
+                };
             }
-            return {
-              action: "allow",
-              overrideBrowserWindowOptions: {
-                width: Math.round(getScreenWidth() * (windowWidth - 0.07)),
-                height: Math.round(getScreenHeight() * (windowHeight - 0.07)),
-              },
-            };
-          }
-        } else {
-          shell.openExternal(url);
-          return { action: "deny" };
         }
-      } else {
-        return { action: "deny" };
-      }
-    } else {
-      if (getValue("websites-in-new-window") === "false") {
-        if (url.includes("page=Download")) return { action: "allow" };
-        BrowserWindow.getFocusedWindow().loadURL(url).catch();
-        if (getValue("discordrpcstatus") === "true") {
-          setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
+    });
+    contents.on("did-finish-load", () => {
+        if (getValue("dynamicicons") === "true") {
+            if (BrowserWindow.getFocusedWindow()) {
+                if (
+                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cpptx") ||
+                    BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".pptx")
+                ) {
+                    if (process.platform === "darwin") {
+                        app.dock.setIcon(join(__dirname, "../assets/icons/apps/powerpoint-mac.png"));
+                    } else if (process.platform === "win32") {
+                        let nimage = nativeImage.createFromPath(
+                            join(__dirname, "../assets/icons/apps/powerpoint.png")
+                        );
+                        BrowserWindow.getAllWindows().forEach((window) => {
+                            window.setOverlayIcon(nimage, "PowerPoint");
+                        });
+                    }
+                } else if (
+                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cdocx") ||
+                    BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".docx")
+                ) {
+                    if (process.platform === "darwin") {
+                        app.dock.setIcon(join(__dirname, "../assets/icons/apps/word-mac.png"));
+                    } else if (process.platform === "win32") {
+                        let nimage = nativeImage.createFromPath(
+                            join(__dirname, "../assets/icons/apps/word.png")
+                        );
+                        BrowserWindow.getAllWindows().forEach((window) => {
+                            window.setOverlayIcon(nimage, "Word");
+                        });
+                    }
+                } else if (
+                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cxlsx") ||
+                    BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".xlsx")
+                ) {
+                    if (process.platform === "darwin") {
+                        app.dock.setIcon(join(__dirname, "../assets/icons/apps/excel-mac.png"));
+                    } else if (process.platform === "win32") {
+                        let nimage = nativeImage.createFromPath(
+                            join(__dirname, "../assets/icons/apps/excel.png")
+                        );
+                        BrowserWindow.getAllWindows().forEach((window) => {
+                            window.setOverlayIcon(nimage, "Excel");
+                        });
+                    }
+                } else if (
+                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("outlook.live.com") ||
+                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("outlook.office.com")
+                ) {
+                    if (process.platform === "darwin") {
+                        app.dock.setIcon(join(__dirname, "../assets/icons/apps/outlook-mac.png"));
+                    } else if (process.platform === "win32") {
+                        let nimage = nativeImage.createFromPath(
+                            join(__dirname, "../assets/icons/apps/outlook.png")
+                        );
+                        BrowserWindow.getAllWindows().forEach((window) => {
+                            window.setOverlayIcon(nimage, "Outlook");
+                        });
+                    }
+                } else if (
+                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("onedrive.live.com") ||
+                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("onedrive.aspx")
+                ) {
+                    if (process.platform === "darwin") {
+                        app.dock.setIcon(join(__dirname, "../assets/icons/apps/onedrive-mac.png"));
+                    } else if (process.platform === "win32") {
+                        let nimage = nativeImage.createFromPath(
+                            join(__dirname, "../assets/icons/apps/onedrive.png")
+                        );
+                        BrowserWindow.getAllWindows().forEach((window) => {
+                            window.setOverlayIcon(nimage, "OneDrive");
+                        });
+                    }
+                } else if (
+                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("teams.live.com")
+                ) {
+                    if (process.platform === "darwin") {
+                        app.dock.setIcon(join(__dirname, "../assets/icons/apps/teams-mac.png"));
+                    } else if (process.platform === "win32") {
+                        let nimage = nativeImage.createFromPath(
+                            join(__dirname, "../assets/icons/apps/teams.png")
+                        );
+                        BrowserWindow.getAllWindows().forEach((window) => {
+                            window.setOverlayIcon(nimage, "Teams");
+                        });
+                    }
+                } else if (
+                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=onenote")
+                ) {
+                    if (process.platform === "darwin") {
+                        app.dock.setIcon(join(__dirname, "../assets/icons/apps/onenote-mac.png"));
+                    } else if (process.platform === "win32") {
+                        let nimage = nativeImage.createFromPath(
+                            join(__dirname, "../assets/icons/apps/onenote.png")
+                        );
+                        BrowserWindow.getAllWindows().forEach((window) => {
+                            window.setOverlayIcon(nimage, "OneNote");
+                        });
+                    }
+                } else {
+                    if (process.platform === "darwin") {
+                        app.dock.setIcon(null);
+                    } else {
+                        BrowserWindow.getAllWindows().forEach((window) => {
+                            window.setOverlayIcon(null, "");
+                        });
+                    }
+                }
+            }
         }
-        return { action: "deny" };
-      } else {
-        if (getValue("discordrpcstatus") === "true") {
-          setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
-        }
-        return {
-          action: "allow",
-          overrideBrowserWindowOptions: {
-            width: Math.round(getScreenWidth() * (windowWidth - 0.07)),
-            height: Math.round(getScreenHeight() * (windowHeight - 0.07)),
-          },
-        };
-      }
-    }
-  });
-  contents.on("did-finish-load", () => {
-    if (getValue("dynamicicons") === "true") {
-      if (BrowserWindow.getFocusedWindow()) {
-        if (
-          BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cpptx") ||
-          BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".pptx")
-        ) {
-          if (process.platform === "darwin") {
-            app.dock.setIcon(join(__dirname, "../assets/icons/apps/powerpoint-mac.png"));
-          } else if (process.platform === "win32") {
-            let nimage = nativeImage.createFromPath(
-              join(__dirname, "../assets/icons/apps/powerpoint.png")
-            );
-            BrowserWindow.getAllWindows().forEach((window) => {
-              window.setOverlayIcon(nimage, "PowerPoint");
-            });
-          }
-        } else if (
-          BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cdocx") ||
-          BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".docx")
-        ) {
-          if (process.platform === "darwin") {
-            app.dock.setIcon(join(__dirname, "../assets/icons/apps/word-mac.png"));
-          } else if (process.platform === "win32") {
-            let nimage = nativeImage.createFromPath(
-              join(__dirname, "../assets/icons/apps/word.png")
-            );
-            BrowserWindow.getAllWindows().forEach((window) => {
-              window.setOverlayIcon(nimage, "Word");
-            });
-          }
-        } else if (
-          BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cxlsx") ||
-          BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".xlsx")
-        ) {
-          if (process.platform === "darwin") {
-            app.dock.setIcon(join(__dirname, "../assets/icons/apps/excel-mac.png"));
-          } else if (process.platform === "win32") {
-            let nimage = nativeImage.createFromPath(
-              join(__dirname, "../assets/icons/apps/excel.png")
-            );
-            BrowserWindow.getAllWindows().forEach((window) => {
-              window.setOverlayIcon(nimage, "Excel");
-            });
-          }
-        } else if (
-          BrowserWindow.getFocusedWindow().webContents.getURL().includes("outlook.live.com") ||
-          BrowserWindow.getFocusedWindow().webContents.getURL().includes("outlook.office.com")
-        ) {
-          if (process.platform === "darwin") {
-            app.dock.setIcon(join(__dirname, "../assets/icons/apps/outlook-mac.png"));
-          } else if (process.platform === "win32") {
-            let nimage = nativeImage.createFromPath(
-              join(__dirname, "../assets/icons/apps/outlook.png")
-            );
-            BrowserWindow.getAllWindows().forEach((window) => {
-              window.setOverlayIcon(nimage, "Outlook");
-            });
-          }
-        } else if (
-          BrowserWindow.getFocusedWindow().webContents.getURL().includes("onedrive.live.com") ||
-          BrowserWindow.getFocusedWindow().webContents.getURL().includes("onedrive.aspx")
-        ) {
-          if (process.platform === "darwin") {
-            app.dock.setIcon(join(__dirname, "../assets/icons/apps/onedrive-mac.png"));
-          } else if (process.platform === "win32") {
-            let nimage = nativeImage.createFromPath(
-              join(__dirname, "../assets/icons/apps/onedrive.png")
-            );
-            BrowserWindow.getAllWindows().forEach((window) => {
-              window.setOverlayIcon(nimage, "OneDrive");
-            });
-          }
-        } else if (
-          BrowserWindow.getFocusedWindow().webContents.getURL().includes("teams.live.com")
-        ) {
-          if (process.platform === "darwin") {
-            app.dock.setIcon(join(__dirname, "../assets/icons/apps/teams-mac.png"));
-          } else if (process.platform === "win32") {
-            let nimage = nativeImage.createFromPath(
-              join(__dirname, "../assets/icons/apps/teams.png")
-            );
-            BrowserWindow.getAllWindows().forEach((window) => {
-              window.setOverlayIcon(nimage, "Teams");
-            });
-          }
-        } else if (
-          BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=onenote")
-        ) {
-          if (process.platform === "darwin") {
-            app.dock.setIcon(join(__dirname, "../assets/icons/apps/onenote-mac.png"));
-          } else if (process.platform === "win32") {
-            let nimage = nativeImage.createFromPath(
-              join(__dirname, "../assets/icons/apps/onenote.png")
-            );
-            BrowserWindow.getAllWindows().forEach((window) => {
-              window.setOverlayIcon(nimage, "OneNote");
-            });
-          }
-        } else {
-          if (process.platform === "darwin") {
-            app.dock.setIcon(null);
-          } else {
-            BrowserWindow.getAllWindows().forEach((window) => {
-              window.setOverlayIcon(null, "");
-            });
-          }
-        }
-      }
-    }
-    BrowserWindow.getAllWindows().forEach((window) => {
-      if (window.webContents.getURL().includes("outlook.live.com")) {
-        window.webContents
-          .executeJavaScript(
-            `
+        BrowserWindow.getAllWindows().forEach((window) => {
+            if (window.webContents.getURL().includes("outlook.live.com")) {
+                window.webContents
+                    .executeJavaScript(
+                        `
             const observer = new MutationObserver((mutationsList) => {
               let adElementFound = false;
               for (const mutation of mutationsList) {
@@ -339,12 +396,12 @@ app.on("web-contents-created", (event, contents) => {
               observer.disconnect();
             }
             `
-          )
-          .catch();
-      }
-    });
-    contents.insertCSS(
-      `
+                    )
+                    .catch();
+            }
+        });
+        contents.insertCSS(
+            `
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -363,64 +420,77 @@ app.on("web-contents-created", (event, contents) => {
         background: #555;
       }      
       `
-    );
-  });
+        );
+    });
 });
 
 app.on("browser-window-created", (event, window) => {
-  if (getValue("autohide-menubar") === "true") {
-    window.setAutoHideMenuBar(true);
-  } else {
-    window.setAutoHideMenuBar(false);
-  }
-  window.webContents.on("did-finish-load", () => {
-    if (getValue("discordrpcstatus") === "true") {
-      setActivity(`On "${window.webContents.getTitle()}"`);
+    if (getValue("autohide-menubar") === "true") {
+        window.setAutoHideMenuBar(true);
+    } else {
+        window.setAutoHideMenuBar(false);
     }
-  });
-  if (getValue("blockadsandtrackers") === "true") {
-    ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) => {
-      blocker.enableBlockingInSession(window.webContents.session);
+    window.webContents.on("did-finish-load", () => {
+        if (getValue("discordrpcstatus") === "true") {
+            setActivity(`On "${window.webContents.getTitle()}"`);
+        }
     });
-  }
+    if (getValue("blockadsandtrackers") === "true") {
+        ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) => {
+            blocker.enableBlockingInSession(window.webContents.session);
+        });
+    }
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-  if (process.platform === "darwin") {
-    app.dock.setIcon(null);
-  }
-  clearActivity();
+    if (process.platform !== "darwin") {
+        if (!app.isQuitting) {
+            event.preventDefault();
+            mainWindow.hide();
+        } else {
+            app.quit();
+        }
+    }
+    if (process.platform === "darwin") {
+        app.dock.hide();
+    }
+});
+app.on('before-quit', () => {
+    app.isQuitting = true;
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+    }else {
+        mainWindow.show();
+    }
 });
-
+app.on('will-quit', () => {
+    if (tray) {
+        tray.destroy();
+    }
+});
 app.on("ready", function () {
-  checkInternetConnected().catch(() => {
-    const options = {
-      type: "warning",
-      buttons: ["Ok"],
-      defaultId: 2,
-      title: "Warning",
-      message: "You appear to be offline!",
-      detail:
-        "Please check your Internet Connectivity. This app cannot run without an Internet Connection!",
-    };
-    dialog.showMessageBox(null, options, (response) => {
-      console.log(response);
+    checkInternetConnected().catch(() => {
+        const options = {
+            type: "warning",
+            buttons: ["Ok"],
+            defaultId: 2,
+            title: "Warning",
+            message: "You appear to be offline!",
+            detail:
+                "Please check your Internet Connectivity. This app cannot run without an Internet Connection!",
+        };
+        dialog.showMessageBox(null, options, (response) => {
+            console.log(response);
+        });
     });
-  });
-  if (getValue("autoupdater") === "true") {
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-  if (getValue("discordrpcstatus") === "true") {
-    loginToRPC();
-    setActivity(`Opening Microsoft 365...`);
-  }
+    if (getValue("autoupdater") === "true") {
+        autoUpdater.checkForUpdatesAndNotify();
+    }
+    if (getValue("discordrpcstatus") === "true") {
+        loginToRPC();
+        setActivity(`Opening Microsoft 365...`);
+    }
 });
