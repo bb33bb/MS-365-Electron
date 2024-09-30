@@ -41,7 +41,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cliqz/adblocker-electron@npm:^1.26.6":
+"@cliqz/adblocker-electron@npm:^1.33.2":
   version: 1.33.2
   resolution: "@cliqz/adblocker-electron@npm:1.33.2"
   dependencies:
@@ -796,7 +796,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@xhayper/discord-rpc@npm:^1.0.21":
+"@xhayper/discord-rpc@npm:^1.2.0":
   version: 1.2.0
   resolution: "@xhayper/discord-rpc@npm:1.2.0"
   dependencies:
@@ -1124,7 +1124,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.4.0":
+"axios@npm:^1.7.7":
   version: 1.7.7
   resolution: "axios@npm:1.7.7"
   dependencies:
@@ -1842,7 +1842,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-builder@npm:^25.0.0":
+"electron-builder@npm:25.0.5":
   version: 25.0.5
   resolution: "electron-builder@npm:25.0.5"
   dependencies:
@@ -1864,7 +1864,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-context-menu@npm:^4.0.0":
+"electron-context-menu@npm:^4.0.4":
   version: 4.0.4
   resolution: "electron-context-menu@npm:4.0.4"
   dependencies:
@@ -1893,7 +1893,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-log@npm:^5.0.0-beta.25":
+"electron-log@npm:^5.2.0":
   version: 5.2.0
   resolution: "electron-log@npm:5.2.0"
   checksum: 10c0/a3925dfe11aabc354ffcd5f47875e0a6c9698e61f5231e4df2ca5afb6e5fa905bba41880a16806adb7c95f441fc1e78f7507331feab0a9dfac0c542c62f2df7e
@@ -1932,7 +1932,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-updater@npm:^6.1.4":
+"electron-updater@npm:6.3.4":
   version: 6.3.4
   resolution: "electron-updater@npm:6.3.4"
   dependencies:
@@ -1948,16 +1948,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:^32.0.0":
-  version: 32.1.2
-  resolution: "electron@npm:32.1.2"
+"electron@npm:^33.0.0-beta.4":
+  version: 33.0.0-beta.4
+  resolution: "electron@npm:33.0.0-beta.4"
   dependencies:
     "@electron/get": "npm:^2.0.0"
     "@types/node": "npm:^20.9.0"
     extract-zip: "npm:^2.0.1"
   bin:
     electron: cli.js
-  checksum: 10c0/9e453e046e024b1454fb212e977d622feba3b6d24ff922a360c06177ec8bcbe58e729e105260285e79c0a203dfcb42d3d795844030bba8681016ab50b7d4bb87
+  checksum: 10c0/494e82d94bdd0a35d83ecb78816e196363009d014669299ec663630181ef021e73b9c822377debe3c470a4f6f023ed1afd62fe55d48ec4d0ef992e4d5ee355c8
   languageName: node
   linkType: hard
 
@@ -2161,7 +2161,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:^9.0.0":
+"eslint@npm:^9.11.1":
   version: 9.11.1
   resolution: "eslint@npm:9.11.1"
   dependencies:
@@ -3682,23 +3682,23 @@ __metadata:
   resolution: "ms-365-electron@workspace:."
   dependencies:
     "@aptabase/electron": "npm:^0.3.1"
-    "@cliqz/adblocker-electron": "npm:^1.26.6"
-    "@xhayper/discord-rpc": "npm:^1.0.21"
-    axios: "npm:^1.4.0"
+    "@cliqz/adblocker-electron": "npm:^1.33.2"
+    "@xhayper/discord-rpc": "npm:^1.2.0"
+    axios: "npm:^1.7.7"
     check-internet-connected: "npm:^2.0.6"
     cross-fetch: "npm:^4.0.0"
-    electron: "npm:^32.0.0"
-    electron-builder: "npm:^25.0.0"
-    electron-context-menu: "npm:^4.0.0"
+    electron: "npm:^33.0.0-beta.4"
+    electron-builder: "npm:25.0.5"
+    electron-context-menu: "npm:^4.0.4"
     electron-dl: "npm:^4.0.0"
-    electron-log: "npm:^5.0.0-beta.25"
+    electron-log: "npm:^5.2.0"
     electron-prompt: "npm:^1.7.0"
     electron-store: "npm:^10.0.0"
-    electron-updater: "npm:^6.1.4"
-    eslint: "npm:^9.0.0"
-    node-gyp: "npm:^10.0.0"
-    prettier: "npm:^3.1.0"
-    prettier-eslint: "npm:^16.1.2"
+    electron-updater: "npm:6.3.4"
+    eslint: "npm:^9.11.1"
+    node-gyp: "npm:^10.2.0"
+    prettier: "npm:^3.3.3"
+    prettier-eslint: "npm:^16.3.0"
   languageName: unknown
   linkType: soft
 
@@ -3771,7 +3771,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-gyp@npm:^10.0.0, node-gyp@npm:latest":
+"node-gyp@npm:^10.2.0, node-gyp@npm:latest":
   version: 10.2.0
   resolution: "node-gyp@npm:10.2.0"
   dependencies:
@@ -4053,7 +4053,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier-eslint@npm:^16.1.2":
+"prettier-eslint@npm:^16.3.0":
   version: 16.3.0
   resolution: "prettier-eslint@npm:16.3.0"
   dependencies:
@@ -4081,7 +4081,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:^3.0.1, prettier@npm:^3.1.0":
+"prettier@npm:^3.0.1, prettier@npm:^3.3.3":
   version: 3.3.3
   resolution: "prettier@npm:3.3.3"
   bin:

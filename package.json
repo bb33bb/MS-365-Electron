@@ -67,26 +67,26 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "electron": "^32.0.0",
-    "electron-builder": "^25.0.0",
-    "eslint": "^9.0.0",
-    "prettier": "^3.1.0",
-    "prettier-eslint": "^16.1.2"
+    "electron": "^33.0.0-beta.4",
+    "electron-builder": "25.0.5",
+    "eslint": "^9.11.1",
+    "prettier": "^3.3.3",
+    "prettier-eslint": "^16.3.0"
   },
   "dependencies": {
     "@aptabase/electron": "^0.3.1",
-    "@cliqz/adblocker-electron": "^1.26.6",
-    "@xhayper/discord-rpc": "^1.0.21",
-    "axios": "^1.4.0",
+    "@cliqz/adblocker-electron": "^1.33.2",
+    "@xhayper/discord-rpc": "^1.2.0",
+    "axios": "^1.7.7",
     "check-internet-connected": "^2.0.6",
     "cross-fetch": "^4.0.0",
-    "electron-context-menu": "^4.0.0",
+    "electron-context-menu": "^4.0.4",
     "electron-dl": "^4.0.0",
-    "electron-log": "^5.0.0-beta.25",
+    "electron-log": "^5.2.0",
     "electron-prompt": "^1.7.0",
     "electron-store": "^10.0.0",
-    "electron-updater": "^6.1.4",
-    "node-gyp": "^10.0.0"
+    "electron-updater": "6.3.4",
+    "node-gyp": "^10.2.0"
   },
   "packageManager": "yarn@4.5.0"
 }
