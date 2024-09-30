@@ -1,4 +1,4 @@
-import {app, Menu, BrowserWindow, dialog, nativeImage, shell, Tray} from "electron";
+import {app, session, Menu, BrowserWindow, dialog, nativeImage, shell, Tray} from "electron";
 import {clearActivity, setActivity, loginToRPC} from "./config/rpc.js";
 import {initialize, trackEvent} from "@aptabase/electron/main";
 import {ElectronBlocker} from "@cliqz/adblocker-electron";
@@ -15,6 +15,7 @@ import updaterpkg from "electron-updater";
 import ElectronDl from "electron-dl";
 import menulayout from "./config/menu.js";
 import logpkg from "electron-log";
+import dns from 'dns';
 
 const {transports, log: _log, functions} = logpkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -27,6 +28,22 @@ let tray;
 transports.file.level = "verbose";
 console.log = _log;
 Object.assign(console, functions);
+const lazyRequire = (module) => {
+    let imported = null;
+    return () => {
+        if (!imported) {
+            imported = require(module);
+        }
+        return imported;
+    };
+};
+
+// 添加错误处理函数
+function handleError(error) {
+    console.error('An error occurred:', error);
+    dialog.showErrorBox('Error', `An error occurred: ${error.message}`);
+}
+
 // 放置错误处理器
 process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
@@ -36,6 +53,112 @@ process.on('uncaughtException', (error) => {
 if (getValue("aptabaseTracking") === true) {
     initialize("A-US-2528580917").catch((error) => {
         console.error("Error initializing:", error);
+    });
+}
+
+// 添加兼容的缓存设置函数
+function setupCompatibleCaching() {
+    try {
+        const userDataPath = app.getPath('userData');
+        console.log('User data path:', userDataPath);
+
+        const cachePath = path.join(userDataPath, 'Cache');
+        console.log('Cache path:', cachePath);
+
+        // 尝试使用其他方法设置缓存
+        if (session.defaultSession.cookies) {
+            console.log('Setting up cookie persistence...');
+            session.defaultSession.cookies.set({
+                url: 'https://microsoft365.com',
+                name: 'cacheTest',
+                value: 'true',
+                expirationDate: Date.now() + 365 * 24 * 60 * 60 * 1000
+            }).then(() => {
+                console.log('Cookie persistence set up successfully');
+            }).catch(error => {
+                console.error('Failed to set up cookie persistence:', error);
+            });
+        }
+
+        // 设置 HTTP 缓存
+        console.log('Setting up HTTP cache...');
+        session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+            if (!details.requestHeaders['Cache-Control']) {
+                details.requestHeaders['Cache-Control'] = 'max-age=3600, public';
+                console.log('Added Cache-Control header for URL:', details.url);
+            } else {
+                console.log('Cache-Control header already exists for URL:', details.url);
+            }
+            callback({requestHeaders: details.requestHeaders, 'Content-Security-Policy': ["default-src 'self'"]});
+        });
+
+        console.log('HTTP cache setup completed');
+
+        // 清理超过3天的 Service Worker 存储
+        if (session.defaultSession.clearStorageData) {
+            console.log('Attempting to clear old Service Worker storage...');
+            const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000);
+            session.defaultSession.clearStorageData({
+                storages: ['serviceworkers'],
+                quotas: ['temporary'],
+                origin: '*',
+                time: threeDaysAgo
+            }).then(() => {
+                console.log('Old Service Worker storage cleared successfully');
+            }).catch(error => {
+                console.error('Failed to clear old Service Worker storage:', error);
+            });
+        }
+        console.log('Caching setup completed successfully');
+    } catch (error) {
+        console.error('Error in setupCompatibleCaching:', error);
+        handleError(error);
+    }
+}
+
+function handleUnhandledRejection(reason, promise) {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    dialog.showErrorBox('Unhandled Promise Rejection', `An error occurred: ${reason}`);
+}
+
+let retryCount = 0;
+const maxRetries = 3;
+
+function loadURLWithRetry(url) {
+    // 获取调用栈信息
+    const stack = new Error().stack;
+    // 解析调用栈以获取调用者函数名
+    const caller = stack.split('\n')[2].trim().split(' ')[1];
+    // 检查 URL 是否为空
+    if (!url) {
+        console.warn(`[${caller}] URL is empty or null. Skipping load.`);
+        return;
+    }
+    mainWindow.loadURL(url).catch(error => {
+        console.error('!Failed to load URL: %s', url);
+        console.error('!Error details: %s', util.inspect(error, { depth: null, colors: true }));
+        console.error('!Error stack trace:');
+        console.error(error.stack);
+        if (error.errno) {
+            console.error('System error number: %s', error.errno);
+        }
+        if (error.code) {
+            console.error('Error code: %s', error.code);
+        }
+        if (error.syscall) {
+            console.error('System call: %s', error.syscall);
+        }
+        // 如果错误是由网络问题引起的，可能会有更多特定的属性
+        if (error.address) {
+            console.error('Remote address: %s', error.address);
+        }
+        if (error.port) {
+            console.error('Remote port: %s', error.port);
+        }
+        // 记录当前的系统状态
+        console.error('Current system time: %s', new Date().toISOString());
+        console.error('Process memory usage: %j', process.memoryUsage());
+        console.error('System uptime: %d seconds', Math.floor(process.uptime()));
     });
 }
 
@@ -52,7 +175,9 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             devTools: true,
+            contextIsolation: true,
             partition: partition,
+            preload: path.join(__dirname, 'preload.js')
         },
     });
     mainWindow = win;  // 保存对主窗口的引用
@@ -65,14 +190,11 @@ function createWindow() {
         frame: false,
         icon: join(__dirname, "/assets/icons/png/1024x1024.png"),
     });
-
-    splash.loadURL(`https://agam778.github.io/MS-365-Electron/loading`);
-    win.loadURL(`https://microsoft365.com/${custompage}/${enterpriseOrNormal}`, {
-        userAgent: getValue("useragentstring") || Windows,
-    });
+    loadURLWithRetry(`https://microsoft365.com/${custompage}/${enterpriseOrNormal}`);
     win.webContents.on("did-finish-load", () => {
         splash.destroy();
         win.show();
+        setupCompatibleCaching();
         if (getValue("aptabaseTracking") === true) {
             trackEvent("app_started").catch((error) => {
                 console.error("Error tracking event:", error);
@@ -93,6 +215,22 @@ function createWindow() {
             win.hide();
             return false;
         }
+    });
+    win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+        console.error('Failed to load URL:', validatedURL, 'Error:', errorDescription);
+        // if (retryCount < maxRetries) {
+        //     retryCount++;
+        //     console.log(`Retrying... Attempt ${retryCount} of ${maxRetries}`);
+        //     setTimeout(() => loadURLWithRetry(url), 1000); // 1秒后重试
+        // } else {
+        //     dialog.showErrorBox('加载失败', `在 ${maxRetries} 次尝试后仍然无法加载页面。`);
+        //     retryCount = 0;
+        // }
+        // if (isMainFrame) {
+        // dialog.showErrorBox('Page Load Failed', `Failed to load ${validatedURL}. Error: ${errorDescription}`);
+        // 可以选择重新加载页面或加载一个错误页面
+        // win.loadFile('error.html'); // 确保你有一个 error.html 文件
+        // }
     });
 }
 
@@ -182,7 +320,7 @@ function createTray() {
                 }
             }
         },
-        { type: 'separator' },
+        {type: 'separator'},
         {
             label: 'Apps',
             submenu: [
@@ -216,7 +354,7 @@ function createTray() {
                 }
             ]
         },
-        { type: 'separator' },
+        {type: 'separator'},
         {
             label: '退出',
             click: () => {
@@ -240,6 +378,7 @@ function createTray() {
 
     return tray;
 }
+
 function openApp(appName) {
     const enterpriseOrNormal = getValue("enterprise-or-normal");
     const windowWidth = getValue("windowWidth");
@@ -280,7 +419,20 @@ function openApp(appName) {
                 partition: enterpriseOrNormal === "?auth=1" ? "persist:personal" : "persist:work",
             },
         });
-        newWindow.loadURL(url);
+        newWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+            console.error(`Failed to load ${appName}:`, validatedURL, 'Error:', errorDescription);
+            // if (isMainFrame) {
+            // mainWindow.loadURL('about:blank'); // 加载一个空白页面
+            // dialog.showErrorBox('加载失败', `无法加载页面 ${validatedURL}。错误: ${errorDescription}`);
+            // dialog.showErrorBox('App Load Failed', `Failed to load ${appName}. Error: ${errorDescription}`);
+            // newWindow.loadFile('error.html'); // 确保你有一个 error.html 文件8
+            // }
+        });
+        newWindow.loadURL(url).catch(error => {
+            console.error(`Error loading ${appName}:`, error);
+            // dialog.showErrorBox('App Load Failed', `Failed to load ${appName}. Error: ${error.message}`);
+            // newWindow.loadFile('error.html');
+        });
     } else {
         mainWindow.loadURL(url);
     }
@@ -289,11 +441,24 @@ function openApp(appName) {
         setActivity(`On ${appName.charAt(0).toUpperCase() + appName.slice(1)}`);
     }
 }
+
 Menu.setApplicationMenu(Menu.buildFromTemplate(menulayout));
 
 app.on("ready", () => {
-    createWindow();
+    dns.lookup('microsoft.com', (err) => {
+        if (err && err.code === 'ENOTFOUND') {
+            dialog.showErrorBox('网络错误', '无法连接到互联网。请检查你的网络连接。');
+        } else {
+            createWindow();
+        }
+    });
     createTray();
+    const mySession = session.defaultSession;
+    // 替代 setCacheLimit
+    mySession.webRequest.onBeforeSendHeaders((details, callback) => {
+        details.requestHeaders['Cache-Control'] = 'max-age=3600';
+        callback({requestHeaders: details.requestHeaders});
+    });
     if (getValue("aptabaseTracking") === null) {
         const aptabasedialog = dialog.showMessageBoxSync({
             type: "question",
@@ -309,6 +474,9 @@ app.on("ready", () => {
             setValue("aptabaseTracking", false);
         }
     }
+    process.on('unhandledRejection', (reason, promise) => {
+        console.log('Unhandled Rejection at:', promise, 'reason:', reason);
+    });
 });
 
 app.on("web-contents-created", (event, contents) => {
@@ -577,7 +745,7 @@ app.on('before-quit', () => {
 app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
-    }else {
+    } else {
         mainWindow.show();
     }
 });

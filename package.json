@@ -32,7 +32,15 @@
         "assets/**/*",
         "build/**/*",
         "node_modules/**/*",
-        "package.json"
+        "package.json",
+        "main.js",
+        "preload.js"
+      ],
+      "extraResources": [
+        {
+          "from": "preload.js",
+          "to": "app/preload.js"
+        }
       ]
     },
     "win": {
