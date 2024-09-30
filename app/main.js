@@ -131,17 +131,14 @@ contextMenu({
 function createTray() {
     let trayIcon;
     try {
-        // 尝试加载 16x16 图标
         const iconPath = path.join(app.getAppPath(), 'assets', 'icons', 'png', '16x16.png');
         trayIcon = nativeImage.createFromPath(iconPath);
 
-        // 检查图标是否成功加载
         if (trayIcon.isEmpty()) {
             throw new Error('Tray icon is empty');
         }
     } catch (error) {
         console.error('Failed to load tray icon:', error);
-        // 使用备用图标或创建一个空白图标
         trayIcon = nativeImage.createEmpty();
     }
 
@@ -157,6 +154,41 @@ function createTray() {
                 }
             }
         },
+        { type: 'separator' },
+        {
+            label: 'Apps',
+            submenu: [
+                {
+                    label: 'Word',
+                    click: () => openApp('word')
+                },
+                {
+                    label: 'Excel',
+                    click: () => openApp('excel')
+                },
+                {
+                    label: 'PowerPoint',
+                    click: () => openApp('powerpoint')
+                },
+                {
+                    label: 'Outlook',
+                    click: () => openApp('outlook')
+                },
+                {
+                    label: 'OneDrive',
+                    click: () => openApp('onedrive')
+                },
+                {
+                    label: 'OneNote',
+                    click: () => openApp('onenote')
+                },
+                {
+                    label: 'All Apps',
+                    click: () => openApp('allapps')
+                }
+            ]
+        },
+        { type: 'separator' },
         {
             label: '退出',
             click: () => {
@@ -174,6 +206,56 @@ function createTray() {
         mainWindow.show();
     });
 }
+function openApp(appName) {
+    const enterpriseOrNormal = getValue("enterprise-or-normal");
+    const windowWidth = getValue("windowWidth");
+    const windowHeight = getValue("windowHeight");
+    let url;
+
+    switch (appName) {
+        case 'word':
+            url = `https://microsoft365.com/launch/word${enterpriseOrNormal}`;
+            break;
+        case 'excel':
+            url = `https://microsoft365.com/launch/excel${enterpriseOrNormal}`;
+            break;
+        case 'powerpoint':
+            url = `https://microsoft365.com/launch/powerpoint${enterpriseOrNormal}`;
+            break;
+        case 'outlook':
+            url = enterpriseOrNormal === "?auth=2" ? "https://outlook.office.com/mail/" : "https://office.live.com/start/Outlook.aspx";
+            break;
+        case 'onedrive':
+            url = `https://microsoft365.com/launch/onedrive${enterpriseOrNormal}`;
+            break;
+        case 'onenote':
+            url = enterpriseOrNormal === "?auth=2" ? "https://www.microsoft365.com/launch/onenote?auth=2" : "https://www.onenote.com/notebooks?auth=1";
+            break;
+        case 'allapps':
+            url = `https://www.microsoft365.com/apps${enterpriseOrNormal}`;
+            break;
+    }
+
+    if (getValue("websites-in-new-window") === "true") {
+        let newWindow = new BrowserWindow({
+            width: Math.round(getScreenWidth() * (windowWidth - 0.07)),
+            height: Math.round(getScreenHeight() * (windowHeight - 0.07)),
+            webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true,
+                partition: enterpriseOrNormal === "?auth=1" ? "persist:personal" : "persist:work",
+            },
+        });
+        newWindow.loadURL(url);
+    } else {
+        BrowserWindow.getFocusedWindow().loadURL(url);
+    }
+
+    if (getValue("discordrpcstatus") === "true") {
+        setActivity(`On ${appName.charAt(0).toUpperCase() + appName.slice(1)}`);
+    }
+}
+
 Menu.setApplicationMenu(Menu.buildFromTemplate(menulayout));
 
 app.on("ready", () => {
