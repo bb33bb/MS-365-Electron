@@ -114,8 +114,8 @@ ElectronDl({
 });
 
 contextMenu({
-  showInspectElement: false,
-  showServices: false,
+  showInspectElement: true,
+  showServices: true,
 });
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(menulayout));
