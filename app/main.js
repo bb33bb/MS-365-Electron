@@ -128,6 +128,30 @@ contextMenu({
     showInspectElement: true,
     showServices: true,
 });
+
+function createMainWindow() {
+    const enterpriseOrNormal = getValue("enterprise-or-normal");
+    const custompage = getValue("custompage");
+    const partition = enterpriseOrNormal === "?auth=1" ? "persist:personal" : "persist:work";
+
+    mainWindow = new BrowserWindow({
+        width: Math.round(getScreenWidth() * getValue("windowWidth")),
+        height: Math.round(getScreenHeight() * getValue("windowHeight")),
+        icon: path.join(app.getAppPath(), 'assets', 'icons', 'png', '1024x1024.png'),
+        webPreferences: {
+            nodeIntegration: true,
+            devTools: true,
+            partition: partition,
+        },
+    });
+
+    mainWindow.loadURL(`https://microsoft365.com/${custompage}/${enterpriseOrNormal}`);
+
+    mainWindow.on('closed', () => {
+        mainWindow = null;
+    });
+}
+
 function createTray() {
     let trayIcon;
     try {
@@ -142,15 +166,19 @@ function createTray() {
         trayIcon = nativeImage.createEmpty();
     }
 
-    tray = new Tray(trayIcon);
+    const tray = new Tray(trayIcon);
 
     const contextMenu = Menu.buildFromTemplate([
         {
             label: '显示',
             click: () => {
-                mainWindow.show();
-                if (getValue("discordrpcstatus") === "true") {
-                    setActivity(`On "${mainWindow.webContents.getTitle()}"`);
+                if (mainWindow) {
+                    mainWindow.show();
+                    if (getValue("discordrpcstatus") === "true") {
+                        setActivity(`On "${mainWindow.webContents.getTitle()}"`);
+                    }
+                } else {
+                    createMainWindow();
                 }
             }
         },
@@ -203,8 +231,14 @@ function createTray() {
     tray.setContextMenu(contextMenu);
 
     tray.on('click', () => {
-        mainWindow.show();
+        if (mainWindow) {
+            mainWindow.show();
+        } else {
+            createMainWindow();
+        }
     });
+
+    return tray;
 }
 function openApp(appName) {
     const enterpriseOrNormal = getValue("enterprise-or-normal");
@@ -236,7 +270,7 @@ function openApp(appName) {
             break;
     }
 
-    if (getValue("websites-in-new-window") === "true") {
+    if (getValue("websites-in-new-window") === "true" || !mainWindow) {
         let newWindow = new BrowserWindow({
             width: Math.round(getScreenWidth() * (windowWidth - 0.07)),
             height: Math.round(getScreenHeight() * (windowHeight - 0.07)),
@@ -248,14 +282,13 @@ function openApp(appName) {
         });
         newWindow.loadURL(url);
     } else {
-        BrowserWindow.getFocusedWindow().loadURL(url);
+        mainWindow.loadURL(url);
     }
 
     if (getValue("discordrpcstatus") === "true") {
         setActivity(`On ${appName.charAt(0).toUpperCase() + appName.slice(1)}`);
     }
 }
-
 Menu.setApplicationMenu(Menu.buildFromTemplate(menulayout));
 
 app.on("ready", () => {
