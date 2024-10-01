@@ -863,7 +863,8 @@ const menulayout = [
                                     partition: "persist:work",
                                 },
                             });
-                            outlookwindow.loadURL("https://outlook.office.com/mail/");
+                            // outlookwindow.loadURL("https://outlook.office.com/mail/");
+                            outlookwindow.loadURL("https://outlook.live.com/mail/0/");
                         } else {
                             BrowserWindow.getFocusedWindow().loadURL("https://outlook.office.com/mail/");
                         }
@@ -878,7 +879,8 @@ const menulayout = [
                                     partition: "persist:personal",
                                 },
                             });
-                            outlookwindow.loadURL("https://office.live.com/start/Outlook.aspx");
+                            // outlookwindow.loadURL("https://office.live.com/start/Outlook.aspx");
+                            outlookwindow.loadURL("https://outlook.live.com/mail/0/");
                         } else {
                             BrowserWindow.getFocusedWindow().loadURL(
                                 "https://office.live.com/start/Outlook.aspx"

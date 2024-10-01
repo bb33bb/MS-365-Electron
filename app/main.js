@@ -7,7 +7,6 @@ import {dirname, join} from "path";
 import {fileURLToPath} from "url";
 import path from "path";
 import {getScreenWidth, getScreenHeight} from "./config/dimensions.js";
-import Windows from "./useragents.json" with {type: "json"};
 import checkInternetConnected from "check-internet-connected";
 import domains from "./domains.json" with {type: "json"};
 import contextMenu from "electron-context-menu";
@@ -28,15 +27,6 @@ let tray;
 transports.file.level = "verbose";
 console.log = _log;
 Object.assign(console, functions);
-const lazyRequire = (module) => {
-    let imported = null;
-    return () => {
-        if (!imported) {
-            imported = require(module);
-        }
-        return imported;
-    };
-};
 
 // 添加错误处理函数
 function handleError(error) {
@@ -136,7 +126,7 @@ function loadURLWithRetry(url) {
     }
     mainWindow.loadURL(url).catch(error => {
         console.error('!Failed to load URL: %s', url);
-        console.error('!Error details: %s', util.inspect(error, { depth: null, colors: true }));
+        console.error('!Error details: %s', util.inspect(error, {depth: null, colors: true}));
         console.error('!Error stack trace:');
         console.error(error.stack);
         if (error.errno) {
@@ -289,6 +279,7 @@ function createMainWindow() {
         mainWindow = null;
     });
 }
+
 function createTray() {
     let trayIcon;
     try {
@@ -319,7 +310,7 @@ function createTray() {
                 }
             }
         },
-        { type: 'separator' },
+        {type: 'separator'},
         {
             label: 'Word',
             click: () => openApp('word')
@@ -352,9 +343,9 @@ function createTray() {
             label: 'All Apps',
             click: () => openApp('allapps')
         },
-        { type: 'separator' },
+        {type: 'separator'},
         {
-            label: '退出',
+            label: 'Exit',
             click: () => {
                 app.isQuitting = true;
                 clearActivity();
@@ -394,7 +385,7 @@ function openApp(appName) {
             url = `https://microsoft365.com/launch/powerpoint${enterpriseOrNormal}`;
             break;
         case 'outlook':
-            url = enterpriseOrNormal === "?auth=2" ? "https://outlook.office.com/mail/" : "https://office.live.com/start/Outlook.aspx";
+            url = `https://outlook.live.com/mail/0/`;
             break;
         case 'onedrive':
             url = `https://microsoft365.com/launch/onedrive${enterpriseOrNormal}`;
@@ -422,17 +413,9 @@ function openApp(appName) {
         });
         newWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
             console.error(`Failed to load ${appName}:`, validatedURL, 'Error:', errorDescription);
-            // if (isMainFrame) {
-            // mainWindow.loadURL('about:blank'); // 加载一个空白页面
-            // dialog.showErrorBox('加载失败', `无法加载页面 ${validatedURL}。错误: ${errorDescription}`);
-            // dialog.showErrorBox('App Load Failed', `Failed to load ${appName}. Error: ${errorDescription}`);
-            // newWindow.loadFile('error.html'); // 确保你有一个 error.html 文件8
-            // }
         });
         newWindow.loadURL(url).catch(error => {
             console.error(`Error loading ${appName}:`, error);
-            // dialog.showErrorBox('App Load Failed', `Failed to load ${appName}. Error: ${error.message}`);
-            // newWindow.loadFile('error.html');
         });
     } else {
         mainWindow.loadURL(url);
