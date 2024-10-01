@@ -89,10 +89,7 @@ function setupCompatibleCaching() {
             console.log('Attempting to clear old Service Worker storage...');
             const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000);
             session.defaultSession.clearStorageData({
-                storages: ['serviceworkers'],
-                quotas: ['temporary'],
-                origin: '*',
-                time: threeDaysAgo
+                storages: ['serviceworkers'], quotas: ['temporary'], origin: '*', time: threeDaysAgo
             }).then(() => {
                 console.log('Old Service Worker storage cleared successfully');
             }).catch(error => {
@@ -208,41 +205,25 @@ function createWindow() {
     });
     win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
         console.error('Failed to load URL:', validatedURL, 'Error:', errorDescription);
-        // if (retryCount < maxRetries) {
-        //     retryCount++;
-        //     console.log(`Retrying... Attempt ${retryCount} of ${maxRetries}`);
-        //     setTimeout(() => loadURLWithRetry(url), 1000); // 1秒后重试
-        // } else {
-        //     dialog.showErrorBox('加载失败', `在 ${maxRetries} 次尝试后仍然无法加载页面。`);
-        //     retryCount = 0;
-        // }
-        // if (isMainFrame) {
-        // dialog.showErrorBox('Page Load Failed', `Failed to load ${validatedURL}. Error: ${errorDescription}`);
-        // 可以选择重新加载页面或加载一个错误页面
-        // win.loadFile('error.html'); // 确保你有一个 error.html 文件
-        // }
     });
 }
 
 ElectronDl({
-    dlPath: "./downloads",
-    onStarted: (item) => {
+    dlPath: "./downloads", onStarted: (item) => {
         dialog.showMessageBox({
             type: "info",
             title: "Downloading File",
             message: `Downloading "${item.getFilename()}" to "${item.getSavePath()}"`,
             buttons: ["OK"],
         });
-    },
-    onCompleted: () => {
+    }, onCompleted: () => {
         dialog.showMessageBox({
             type: "info",
             title: "Download Completed",
             message: `Downloading Completed! Please check your "Downloads" folder.`,
             buttons: ["OK"],
         });
-    },
-    onError: (item) => {
+    }, onError: (item) => {
         dialog.showMessageBox({
             type: "error",
             title: "Download failed",
@@ -253,8 +234,7 @@ ElectronDl({
 });
 
 contextMenu({
-    showInspectElement: true,
-    showServices: true,
+    showInspectElement: true, showServices: true,
 });
 
 function createMainWindow() {
@@ -267,9 +247,7 @@ function createMainWindow() {
         height: Math.round(getScreenHeight() * getValue("windowHeight")),
         icon: path.join(app.getAppPath(), 'assets', 'icons', 'png', '1024x1024.png'),
         webPreferences: {
-            nodeIntegration: true,
-            devTools: true,
-            partition: partition,
+            nodeIntegration: true, devTools: true, partition: partition,
         },
     });
 
@@ -296,63 +274,38 @@ function createTray() {
 
     const tray = new Tray(trayIcon);
 
-    const contextMenu = Menu.buildFromTemplate([
-        {
-            label: '显示',
-            click: () => {
-                if (mainWindow) {
-                    mainWindow.show();
-                    if (getValue("discordrpcstatus") === "true") {
-                        setActivity(`On "${mainWindow.webContents.getTitle()}"`);
-                    }
-                } else {
-                    createMainWindow();
+    const contextMenu = Menu.buildFromTemplate([{
+        label: 'Main', click: () => {
+            if (mainWindow) {
+                mainWindow.show();
+                if (getValue("discordrpcstatus") === "true") {
+                    setActivity(`On "${mainWindow.webContents.getTitle()}"`);
                 }
-            }
-        },
-        {type: 'separator'},
-        {
-            label: 'Word',
-            click: () => openApp('word')
-        },
-        {
-            label: 'Excel',
-            click: () => openApp('excel')
-        },
-        {
-            label: 'PowerPoint',
-            click: () => openApp('powerpoint')
-        },
-        {
-            label: 'Outlook',
-            click: () => openApp('outlook')
-        },
-        {
-            label: 'OneDrive',
-            click: () => openApp('onedrive')
-        },
-        {
-            label: 'OneNote',
-            click: () => openApp('onenote')
-        },
-        {
-            label: 'Teams',
-            click: () => openApp('teams')
-        },
-        {
-            label: 'All Apps',
-            click: () => openApp('allapps')
-        },
-        {type: 'separator'},
-        {
-            label: 'Exit',
-            click: () => {
-                app.isQuitting = true;
-                clearActivity();
-                app.quit();
+            } else {
+                createMainWindow();
             }
         }
-    ]);
+    }, {type: 'separator'}, {
+        label: 'Word', click: () => openApp('word')
+    }, {
+        label: 'Excel', click: () => openApp('excel')
+    }, {
+        label: 'PowerPoint', click: () => openApp('powerpoint')
+    }, {
+        label: 'Outlook', click: () => openApp('outlook')
+    }, {
+        label: 'OneDrive', click: () => openApp('onedrive')
+    }, {
+        label: 'OneNote', click: () => openApp('onenote')
+    }, {
+        label: 'Teams', click: () => openApp('teams')
+    }, {type: 'separator'}, {
+        label: 'Exit', click: () => {
+            app.isQuitting = true;
+            clearActivity();
+            app.quit();
+        }
+    }]);
 
     tray.setToolTip('Microsoft 365 Electron');
     tray.setContextMenu(contextMenu);
@@ -393,7 +346,7 @@ function openApp(appName) {
         case 'onenote':
             url = enterpriseOrNormal === "?auth=2" ? "https://www.microsoft365.com/launch/onenote?auth=2" : "https://www.onenote.com/notebooks?auth=1";
             break;
-        case 'allapps':
+        case 'Main':
             url = `https://www.microsoft365.com/apps${enterpriseOrNormal}`;
             break;
         case 'teams':
@@ -449,8 +402,7 @@ app.on("ready", () => {
             buttons: ["Yes", "No"],
             title: "Enable Aptabase Tracking",
             message: "Would you like to enable Aptabase Tracking?",
-            detail:
-                "Aptabase Tracking helps us improve the app by collecting anonymous usage data. No personal information is collected.\n\nYou can always enable or disable this in the app menu.",
+            detail: "Aptabase Tracking helps us improve the app by collecting anonymous usage data. No personal information is collected.\n\nYou can always enable or disable this in the app menu.",
         });
         if (aptabasedialog === 0) {
             setValue("aptabaseTracking", true);
@@ -471,9 +423,7 @@ app.on("web-contents-created", (event, contents) => {
 
         if (getValue("externalLinks") === "true") {
             if (protocol === "http:" || protocol === "https:") {
-                const isAllowedDomain = domains.domains.some((allowedDomain) =>
-                    new RegExp(`^${allowedDomain.replace("*.", ".*")}$`).test(domain)
-                );
+                const isAllowedDomain = domains.domains.some((allowedDomain) => new RegExp(`^${allowedDomain.replace("*.", ".*")}$`).test(domain));
 
                 if (isAllowedDomain) {
                     if (getValue("websites-in-new-window") === "false") {
@@ -488,8 +438,7 @@ app.on("web-contents-created", (event, contents) => {
                             setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
                         }
                         return {
-                            action: "allow",
-                            overrideBrowserWindowOptions: {
+                            action: "allow", overrideBrowserWindowOptions: {
                                 width: Math.round(getScreenWidth() * (windowWidth - 0.07)),
                                 height: Math.round(getScreenHeight() * (windowHeight - 0.07)),
                             },
@@ -515,8 +464,7 @@ app.on("web-contents-created", (event, contents) => {
                     setActivity(`On "${BrowserWindow.getFocusedWindow().webContents.getTitle()}"`);
                 }
                 return {
-                    action: "allow",
-                    overrideBrowserWindowOptions: {
+                    action: "allow", overrideBrowserWindowOptions: {
                         width: Math.round(getScreenWidth() * (windowWidth - 0.07)),
                         height: Math.round(getScreenHeight() * (windowHeight - 0.07)),
                     },
@@ -527,98 +475,65 @@ app.on("web-contents-created", (event, contents) => {
     contents.on("did-finish-load", () => {
         if (getValue("dynamicicons") === "true") {
             if (BrowserWindow.getFocusedWindow()) {
-                if (
-                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cpptx") ||
-                    BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".pptx")
-                ) {
+                if (BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cpptx") || BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".pptx")) {
                     if (process.platform === "darwin") {
                         app.dock.setIcon(join(__dirname, "../assets/icons/apps/powerpoint-mac.png"));
                     } else if (process.platform === "win32") {
-                        let nimage = nativeImage.createFromPath(
-                            join(__dirname, "../assets/icons/apps/powerpoint.png")
-                        );
+                        let nimage = nativeImage.createFromPath(join(__dirname, "../assets/icons/apps/powerpoint.png"));
                         BrowserWindow.getAllWindows().forEach((window) => {
                             window.setOverlayIcon(nimage, "PowerPoint");
                         });
                     }
-                } else if (
-                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cdocx") ||
-                    BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".docx")
-                ) {
+                } else if (BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cdocx") || BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".docx")) {
                     if (process.platform === "darwin") {
                         app.dock.setIcon(join(__dirname, "../assets/icons/apps/word-mac.png"));
                     } else if (process.platform === "win32") {
-                        let nimage = nativeImage.createFromPath(
-                            join(__dirname, "../assets/icons/apps/word.png")
-                        );
+                        let nimage = nativeImage.createFromPath(join(__dirname, "../assets/icons/apps/word.png"));
                         BrowserWindow.getAllWindows().forEach((window) => {
                             window.setOverlayIcon(nimage, "Word");
                         });
                     }
-                } else if (
-                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cxlsx") ||
-                    BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".xlsx")
-                ) {
+                } else if (BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=file%2cxlsx") || BrowserWindow.getFocusedWindow().webContents.getTitle().includes(".xlsx")) {
                     if (process.platform === "darwin") {
                         app.dock.setIcon(join(__dirname, "../assets/icons/apps/excel-mac.png"));
                     } else if (process.platform === "win32") {
-                        let nimage = nativeImage.createFromPath(
-                            join(__dirname, "../assets/icons/apps/excel.png")
-                        );
+                        let nimage = nativeImage.createFromPath(join(__dirname, "../assets/icons/apps/excel.png"));
                         BrowserWindow.getAllWindows().forEach((window) => {
                             window.setOverlayIcon(nimage, "Excel");
                         });
                     }
-                } else if (
-                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("outlook.live.com") ||
-                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("outlook.office.com")
-                ) {
+                } else if (BrowserWindow.getFocusedWindow().webContents.getURL().includes("outlook.live.com") || BrowserWindow.getFocusedWindow().webContents.getURL().includes("outlook.office.com")) {
                     if (process.platform === "darwin") {
                         app.dock.setIcon(join(__dirname, "../assets/icons/apps/outlook-mac.png"));
                     } else if (process.platform === "win32") {
-                        let nimage = nativeImage.createFromPath(
-                            join(__dirname, "../assets/icons/apps/outlook.png")
-                        );
+                        let nimage = nativeImage.createFromPath(join(__dirname, "../assets/icons/apps/outlook.png"));
                         BrowserWindow.getAllWindows().forEach((window) => {
                             window.setOverlayIcon(nimage, "Outlook");
                         });
                     }
-                } else if (
-                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("onedrive.live.com") ||
-                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("onedrive.aspx")
-                ) {
+                } else if (BrowserWindow.getFocusedWindow().webContents.getURL().includes("onedrive.live.com") || BrowserWindow.getFocusedWindow().webContents.getURL().includes("onedrive.aspx")) {
                     if (process.platform === "darwin") {
                         app.dock.setIcon(join(__dirname, "../assets/icons/apps/onedrive-mac.png"));
                     } else if (process.platform === "win32") {
-                        let nimage = nativeImage.createFromPath(
-                            join(__dirname, "../assets/icons/apps/onedrive.png")
-                        );
+                        let nimage = nativeImage.createFromPath(join(__dirname, "../assets/icons/apps/onedrive.png"));
                         BrowserWindow.getAllWindows().forEach((window) => {
                             window.setOverlayIcon(nimage, "OneDrive");
                         });
                     }
-                } else if (
-                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("teams.live.com")
-                ) {
+                } else if (BrowserWindow.getFocusedWindow().webContents.getURL().includes("teams.live.com")) {
                     if (process.platform === "darwin") {
                         app.dock.setIcon(join(__dirname, "../assets/icons/apps/teams-mac.png"));
                     } else if (process.platform === "win32") {
-                        let nimage = nativeImage.createFromPath(
-                            join(__dirname, "../assets/icons/apps/teams.png")
-                        );
+                        let nimage = nativeImage.createFromPath(join(__dirname, "../assets/icons/apps/teams.png"));
                         BrowserWindow.getAllWindows().forEach((window) => {
                             window.setOverlayIcon(nimage, "Teams");
                         });
                     }
-                } else if (
-                    BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=onenote")
-                ) {
+                } else if (BrowserWindow.getFocusedWindow().webContents.getURL().includes("&ithint=onenote")) {
                     if (process.platform === "darwin") {
                         app.dock.setIcon(join(__dirname, "../assets/icons/apps/onenote-mac.png"));
                     } else if (process.platform === "win32") {
-                        let nimage = nativeImage.createFromPath(
-                            join(__dirname, "../assets/icons/apps/onenote.png")
-                        );
+                        let nimage = nativeImage.createFromPath(join(__dirname, "../assets/icons/apps/onenote.png"));
                         BrowserWindow.getAllWindows().forEach((window) => {
                             window.setOverlayIcon(nimage, "OneNote");
                         });
@@ -637,8 +552,7 @@ app.on("web-contents-created", (event, contents) => {
         BrowserWindow.getAllWindows().forEach((window) => {
             if (window.webContents.getURL().includes("outlook.live.com")) {
                 window.webContents
-                    .executeJavaScript(
-                        `
+                    .executeJavaScript(`
             const observer = new MutationObserver((mutationsList) => {
               let adElementFound = false;
               for (const mutation of mutationsList) {
@@ -662,13 +576,11 @@ app.on("web-contents-created", (event, contents) => {
               adElement.remove();
               observer.disconnect();
             }
-            `
-                    )
+            `)
                     .catch();
             }
         });
-        contents.insertCSS(
-            `
+        contents.insertCSS(`
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -686,8 +598,7 @@ app.on("web-contents-created", (event, contents) => {
       ::-webkit-scrollbar-thumb:hover {
         background: #555;
       }      
-      `
-        );
+      `);
     });
 });
 
@@ -746,8 +657,7 @@ app.on("ready", function () {
             defaultId: 2,
             title: "Warning",
             message: "You appear to be offline!",
-            detail:
-                "Please check your Internet Connectivity. This app cannot run without an Internet Connection!",
+            detail: "Please check your Internet Connectivity. This app cannot run without an Internet Connection!",
         };
         dialog.showMessageBox(null, options, (response) => {
             console.log(response);
