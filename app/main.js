@@ -289,7 +289,6 @@ function createMainWindow() {
         mainWindow = null;
     });
 }
-
 function createTray() {
     let trayIcon;
     try {
@@ -320,41 +319,40 @@ function createTray() {
                 }
             }
         },
-        {type: 'separator'},
+        { type: 'separator' },
         {
-            label: 'Apps',
-            submenu: [
-                {
-                    label: 'Word',
-                    click: () => openApp('word')
-                },
-                {
-                    label: 'Excel',
-                    click: () => openApp('excel')
-                },
-                {
-                    label: 'PowerPoint',
-                    click: () => openApp('powerpoint')
-                },
-                {
-                    label: 'Outlook',
-                    click: () => openApp('outlook')
-                },
-                {
-                    label: 'OneDrive',
-                    click: () => openApp('onedrive')
-                },
-                {
-                    label: 'OneNote',
-                    click: () => openApp('onenote')
-                },
-                {
-                    label: 'All Apps',
-                    click: () => openApp('allapps')
-                }
-            ]
+            label: 'Word',
+            click: () => openApp('word')
         },
-        {type: 'separator'},
+        {
+            label: 'Excel',
+            click: () => openApp('excel')
+        },
+        {
+            label: 'PowerPoint',
+            click: () => openApp('powerpoint')
+        },
+        {
+            label: 'Outlook',
+            click: () => openApp('outlook')
+        },
+        {
+            label: 'OneDrive',
+            click: () => openApp('onedrive')
+        },
+        {
+            label: 'OneNote',
+            click: () => openApp('onenote')
+        },
+        {
+            label: 'Teams',
+            click: () => openApp('teams')
+        },
+        {
+            label: 'All Apps',
+            click: () => openApp('allapps')
+        },
+        { type: 'separator' },
         {
             label: '退出',
             click: () => {
@@ -406,6 +404,9 @@ function openApp(appName) {
             break;
         case 'allapps':
             url = `https://www.microsoft365.com/apps${enterpriseOrNormal}`;
+            break;
+        case 'teams':
+            url = `https://teams.live.com/v2/`;
             break;
     }
 
