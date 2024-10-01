@@ -35,7 +35,7 @@ export async function checkForUpdates() {
           buttons: ["Download", "Close"],
         });
         if (updatedialog === 0) {
-          shell.openExternal("https://github.com/agam778/MS-365-Electron/releases/latest");
+          // shell.openExternal("");
         }
       }
     } else {

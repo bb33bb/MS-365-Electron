@@ -6,12 +6,12 @@
   "main": "./app/main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/agam778/MS-365-Electron.git"
+    "url": ""
   },
   "author": {
     "name": "Agampreet Singh",
-    "email": "agam778@zohomail.in",
-    "url": "https://agam778.is-a.dev/"
+    "email": "",
+    "url": ""
   },
   "build": {
     "extraFiles": [
@@ -59,7 +59,7 @@
       "category": "Office",
       "icon": "./assets/icons/png",
       "executableName": "ms-365-electron",
-      "maintainer": "Agampreet Singh <agam778@zohomail.in>",
+      "maintainer": "",
       "target": [
         "snap",
         "deb",

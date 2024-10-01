@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
     <id>io.github.agam778.MS-365-Electron</id>
-    <launchable type="desktop-id">io.github.agam778.MS-365-Electron.desktop</launchable>
+<!--    <launchable type="desktop-id"></launchable>-->
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>MIT</project_license>
 
@@ -38,6 +38,6 @@
         <value key="GnomeSoftware::popular-background">https://dashboard.snapcraft.io/site_media/appmedia/2022/05/Untitled_design1.png</value>
     </metadata>
 
-    <url type="homepage">https://github.com/agam778/MS-365-Electron/</url>
-    <url type="bugtracker">https://github.com/agam778/MS-365-Electron/issues</url>
+<!--    <url type="homepage">https://github.com/agam778/MS-365-Electron/</url>-->
+<!--    <url type="bugtracker">https://github.com/agam778/MS-365-Electron/issues</url>-->
 </component>
